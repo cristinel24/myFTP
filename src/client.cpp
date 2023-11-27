@@ -9,26 +9,32 @@ int main() {
     HANDLE((sock = socket(AF_INET, SOCK_STREAM, 0)));
     HANDLE(connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)));
 
+    signal(SIGINT, sigint_handler);
+
     bool ok = login(sock);
 
     while (ok) {
         printf("YUPPY\n");
     }
 
-    close(sock);
     return 0;
 }
 
 bool login(int sock) {
     login_header header;
+    
 
     printf("Enter username: ");
     scanf("%s", username);
+
+    char* password = (char *)calloc(MAX_PASSWORD_SIZE, 1);
     printf("Enter password: ");
     scanf("%s", password);
 
     strcpy(header.username, username);
     strcpy(header.password, hashFunction(password));
+
+    delete password;
 
     send(sock, &header, sizeof(header), 0);
     HANDLE(read(sock, &header, sizeof(header)));

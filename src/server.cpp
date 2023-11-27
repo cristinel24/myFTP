@@ -141,20 +141,22 @@ void *handle_client(void *context) {
 
     // printf("pwd: %s\n", cwd);
 
-    // while (true) {
-    //     msg_header header;
-    //     HANDLE(read(*client_socket, &header, sizeof(header)));
+    bool ok = true;
+    while (ok) {
+        msg_header header;
+        HANDLE(read(*client_socket, &header, sizeof(header)));
 
-    //     switch (header.type)
-    //     {
-    //     case types::CD:
+        switch (header.type)
+        {
+            case types::USER_DISCONNECT:
+                users_db->disconnectUser(header.username);
+                ok = false;
+                break;
 
-    //         break;
-        
-    //     default:
-    //         break;
-    //     }
-    // }
+            default:
+                break;
+        }
+    }
 
     close(*client_socket);
     return nullptr;

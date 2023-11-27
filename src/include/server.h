@@ -30,8 +30,9 @@ serverCommands mapServerCommands(const std::string& str) {
 
 void *handle_client(void *context);
 void *client_manager(void *context);
+
 void sigint_handler(int sig) {
-    users_db.disconnectAllUsers();
-    close(server_socket);
+    HANDLE(users_db.disconnectAllUsers());
+    HANDLE(close(server_socket));
     exit(0);
 }

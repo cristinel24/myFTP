@@ -56,12 +56,16 @@ enum loginTypes {
     CONNECTED
 };
 
+struct FileData {
+    char path[MAX_LOCATION_SIZE];
+    char fileName[MAX_FILENAME_SIZE];
+};
+
 struct msg_header {
     enum types type;
     size_t content_size = 0;
     char username[MAX_USERNAME_SIZE];
-    char cwd[MAX_LOCATION_SIZE];
-    char fileName[MAX_FILENAME_SIZE];
+    FileData data;
 };
 
 struct login_header {
@@ -70,5 +74,5 @@ struct login_header {
     char password[MAX_PASSWORD_SIZE];
 };
 
-void send_payload(int fd, types type, const char* msg);
+void send_payload(int fd, types type, const char* msg, const char* username, FileData* data);
 void send_connection_state(int fd, loginTypes type);
