@@ -30,15 +30,26 @@ Database::~Database() {
     }
 }
 
-int Database::insert(const string &username, const string &password) {
-    string query = "INSERT INTO users (username, password, allowed, connected) "
-                   "VALUES ('" + username + "', '" + password + "', 0, 0);";
+int Database::addUser(const string &username) {
+    string query = "INSERT INTO users (username, allowed, connected) "
+                   "VALUES ('" + username + "', 1, 0);";
 
     if (sqlite3_exec(db, query.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
         sqlite3_free(errMsg);
         return -1; 
     }
-    return 0; 
+    return 1; 
+}
+
+int Database::deleteUser(const string &username) {
+    string query = "DELETE FROM users "
+                   "WHERE username = '" + username + "';";
+
+    if (sqlite3_exec(db, query.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
+        sqlite3_free(errMsg);
+        return -1;
+    }
+    return 1;
 }
 
 int Database::select(const string &username, string &value) {
@@ -51,7 +62,9 @@ int Database::select(const string &username, string &value) {
     
     if (sqlite3_get_table(db, query.c_str(), &results, &rows, &columns, &errMsg) == SQLITE_OK) {
         if (rows) {
-            value = results[1]; 
+            if (results[1] == NULL)
+                value = "null"; 
+            else value = results[1]; 
         } else {
             value = ""; 
         }
@@ -63,7 +76,26 @@ int Database::select(const string &username, string &value) {
     }
 }
 
-bool Database::isUserAllowed(const string &username, const string &password) {
+int Database::updatePass(const string& username, const string& value) {
+    sqlite3_stmt *stmt;
+    string query = "UPDATE users "
+                        "SET password = '" + value + "' "                
+                        "WHERE username = ?";
+
+    if (sqlite3_prepare_v2(db, query.c_str(), -1, &stmt, nullptr) != SQLITE_OK) 
+        return -1;
+
+    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
+
+    int status = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (status == SQLITE_DONE)
+        return 0;
+    return -1;
+}
+
+bool Database::isUserAllowed(const string &username) {
     string query = "SELECT allowed "
                    "FROM users "
                    "WHERE username = '" + username + "';";
@@ -77,14 +109,29 @@ bool Database::isUserAllowed(const string &username, const string &password) {
             sqlite3_free_table(results);
             return allowed != 0; 
         } else {
-            query = "INSERT INTO users (username, password, allowed, connected) "
-                    "VALUES ('" + username + "', '" + password + "', 1, 1);";
+            return false; 
+        }
+    } else {
+        sqlite3_free(errMsg);
+        return false; 
+    }
+}
 
-            if (sqlite3_exec(db, query.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
-                sqlite3_free(errMsg);
-                return false; 
-            }
-            return true; 
+bool Database::isUserConnected(const string & username) {
+    string query = "SELECT connected "
+                   "FROM users "
+                   "WHERE username = '" + username + "';";
+
+    char **results = nullptr;
+    int rows = 0, columns = 0;
+
+    if (sqlite3_get_table(db, query.c_str(), &results, &rows, &columns, &errMsg) == SQLITE_OK) {
+        if (rows) {
+            int connected = stoi(results[1]); 
+            sqlite3_free_table(results);
+            return connected != 0; 
+        } else {
+            return false;
         }
     } else {
         sqlite3_free(errMsg);
@@ -129,6 +176,25 @@ vector<string> Database::getConnectedUsers() {
 
     sqlite3_finalize(stmt);
     return connectedUsers;
+}
+
+vector<string> Database::getUsers() {
+    vector<string> users;
+    sqlite3_stmt *stmt;
+    const char *query = "SELECT username "
+                        "FROM users ";
+
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
+        return users;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        string username(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+        users.push_back(username);
+    }
+
+    sqlite3_finalize(stmt);
+    return users;
 }
 
 int Database::disconnectAllUsers() {

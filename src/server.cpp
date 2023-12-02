@@ -47,11 +47,36 @@ int main() {
                 printf("\n");
                 break;
             }
+            case serverCommands::GET_USERS: {
+                int counter = 0;
+                std::vector<std::string> users = users_db.getUsers();
+                for (auto user : users) {
+                    printf("%d. %s\n", ++counter, user.c_str());
+                }
+                printf("\n");
+                break;
+            }
             case serverCommands::LOGS: {
                 std::ifstream fileName(logger.getFileName());
                 std::string line;
                 while (std::getline(fileName, line)) {
                     printf("%s\n", line.c_str());
+                }
+                break;
+            }
+            case serverCommands::ADD_USER: {
+                std::string user;
+                std::cin >> user;
+                if (users_db.addUser(user) < 0) {
+                    printf("Unable to add user %s. Maybe the user already exists?\n", user.c_str());
+                }
+                break;
+            }
+            case serverCommands::DELETE_USER: {
+                std::string user;
+                std::cin >> user;
+                if (users_db.deleteUser(user) < 0) {
+                    printf("Unable to delete user %s. Maybe the user doesn't exists?\n", user.c_str());
                 }
                 break;
             }
@@ -113,7 +138,7 @@ void *handle_client(void *context) {
 
     login_header resp;
     HANDLE(read(*client_socket, &resp, sizeof(resp)));
-    if (!users_db->isUserAllowed(resp.username, resp.password)) {
+    if (!users_db->isUserAllowed(resp.username) || users_db->isUserConnected(resp.username)) {
         send_connection_state(*client_socket, loginTypes::FORBIDDEN);
         return nullptr;
     } else {
@@ -123,7 +148,11 @@ void *handle_client(void *context) {
         
         HANDLE(users_db->select(username, passwd));
 
-        if (passwd != user_pass) {
+        //set passwd for new user
+        if (passwd == "null") {
+            users_db->updatePass(username, user_pass);
+        }
+        else if (passwd != user_pass) {
             send_connection_state(*client_socket, loginTypes::BAD_PASSWORD);
             return nullptr;
         }        
@@ -151,6 +180,15 @@ void *handle_client(void *context) {
 
         switch (header.type)
         {
+            case types::CHECK_ACCESS: {
+                msg_header hd;
+                hd.type = users_db->isUserAllowed(string(header.username)) ? types::CHECK_ACCESS : types::ERROR;
+                HANDLE(write(*client_socket, &hd, sizeof(hd)));
+
+                if (hd.type == types::ERROR)
+                    ok = !ok;
+                break;
+            }
             case types::USER_DISCONNECT:
                 users_db->disconnectUser(header.username);
                 ok = false;

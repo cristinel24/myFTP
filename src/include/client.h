@@ -11,8 +11,7 @@ char cwd[MAX_LOCATION_SIZE];
 
 #define CHECK_ERROR(var) \
     if ((var) == types::ERROR) { \
-        std::cout << var<< '\n'; \
-        std::cout << "Server Error!" << '\n'; \
+        std::cout << "ERROR: "; \
         break; \
     }
 
@@ -25,6 +24,7 @@ enum clientCommands {
     STATR,
     UPLOADR,
     DOWNLOADR,
+    QUIT,
     None 
 };
 
@@ -37,6 +37,7 @@ clientCommands mapClientCommands(const std::string& str) {
     if (str == "statr")     return clientCommands::STATR;
     if (str == "up")        return clientCommands::UPLOADR;
     if (str == "down")      return clientCommands::DOWNLOADR;
+    if (str == "quit")      return clientCommands::QUIT;
     return clientCommands::None;
 }
 

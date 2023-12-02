@@ -13,7 +13,10 @@ pthread_mutex_t thread_locker = PTHREAD_MUTEX_INITIALIZER;
 std::vector<int> clients;
 
 enum serverCommands {
-    GET_LOGGED_USERS, 
+    GET_LOGGED_USERS,
+    ADD_USER,
+    DELETE_USER,
+    GET_USERS,
     BAN, 
     UNBAN,
     GET_BANNED_USERS,
@@ -22,11 +25,15 @@ enum serverCommands {
 };
 
 serverCommands mapServerCommands(const std::string& str) {
-    if (str == "get_logged_users")  return GET_LOGGED_USERS;
-    if (str == "get_banned_users")  return GET_BANNED_USERS;
-    if (str == "ban")               return BAN;
-    if (str == "unban")             return UNBAN;
-    if (str == "logs")              return LOGS;
+    if (str == "logged")        return GET_LOGGED_USERS;
+    if (str == "banned")        return GET_BANNED_USERS;
+    if (str == "users")         return GET_USERS;
+    if (str == "ban")           return BAN;
+    if (str == "unban")         return UNBAN;
+    if (str == "logs")          return LOGS;
+    if (str == "add")           return ADD_USER;
+    if (str == "delete")        return DELETE_USER;
+    
     return None;
 }
 

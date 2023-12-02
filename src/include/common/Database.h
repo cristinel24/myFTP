@@ -17,12 +17,17 @@ class Database {
     Database();
     ~Database();
     
-    int insert(const string &username, const string &password);
+    int addUser(const string &username);
+    int deleteUser(const string &username);
+
     int select(const string &username, string &value);
-    bool isUserAllowed(const string &username, const string &password);
+    int updatePass(const string& username, const string& value);
+    bool isUserAllowed(const string &username);
+    bool isUserConnected(const string & username);
 
     int connectUser(const string &username);
     vector<string> getConnectedUsers();
+    vector<string> getUsers();
     int disconnectAllUsers();
     int disconnectUser(const std::string &username);
 

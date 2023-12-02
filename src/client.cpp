@@ -12,6 +12,7 @@ int main() {
     signal(SIGINT, sigint_handler);
 
     bool ok = login(sock);
+    if (!ok) exit(0);
 
     char temp[MAX_LOCATION_SIZE];
     msg_header hd;
@@ -25,7 +26,15 @@ int main() {
     FileManager fm(string(cwd), sock);
 
     std::string command;
-    while (ok) {
+    while (true) {
+        msg_header hd;
+        hd.type = types::CHECK_ACCESS;
+        strcpy(hd.username, username);
+
+        HANDLE(write(sock, &hd, sizeof(hd)));
+        HANDLE(read(sock, &hd, sizeof(hd)));
+        CHECK_ERROR(hd.type);
+
         std::cout<< "remote: " << remoteLocation << '\n' << "local: " << fm.getCurrentPath() << '\n' << "> ";
         std::cin >> command;
         switch (mapClientCommands(command)) {
@@ -35,6 +44,7 @@ int main() {
                 msg_header hd;
                 hd.type = types::CD;
                 strcpy(hd.data.path, path.c_str());
+
                 HANDLE(write(sock, &hd, sizeof(hd)));
                 HANDLE(read(sock, &hd, sizeof(hd)));
 
@@ -123,9 +133,16 @@ int main() {
                 fm.upload(localPath, remotePath);
                 break;
             }
+            case clientCommands::QUIT: {
+                send_payload(sock, types::USER_DISCONNECT, nullptr, username, nullptr);
+                close(sock);
+                exit(0);
+            }
         }
         printf("\n");
     }
+
+    printf("You were banned from this server.\n");
 
     return 0;
 }
@@ -153,7 +170,7 @@ bool login(int sock) {
     switch (header.type)
     {
         case loginTypes::FORBIDDEN:
-            printf("You were banned from this server :c\n");
+            printf("You don't have acces to this server :c\n");
             break;
 
         case loginTypes::BAD_PASSWORD:

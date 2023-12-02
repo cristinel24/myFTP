@@ -101,6 +101,7 @@ bool FileManager::upload(const string& localPath, const string& remotePath) {
         msg_header hd;
         hd.type         = types::MK_DIR;
         strcpy(hd.data.path, remotePath.c_str());
+
         HANDLE_NO_EXIT(write(remote, &hd, sizeof(hd)));
         HANDLE_NO_EXIT(read(remote, &hd, sizeof(hd)));
         if (hd.type == types::ERROR) {
@@ -136,6 +137,7 @@ bool FileManager::upload(const string& localPath, const string& remotePath) {
         hd.type         = types::UPLOAD;
         hd.content_size = (size_t)info.st_size;
         strcpy(hd.data.path, remotePath.c_str());
+
         HANDLE_NO_EXIT(write(remote, &hd, sizeof(hd)));
 
         while((nBytes = fread(chunk.data(), 1, CHUNK, source)) > 0) {

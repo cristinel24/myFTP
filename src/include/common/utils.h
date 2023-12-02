@@ -54,6 +54,7 @@ enum types {
     MK_DIR,
 
     USER_DISCONNECT,
+    CHECK_ACCESS,
     SUCCESS
 };
 
