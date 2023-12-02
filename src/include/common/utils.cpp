@@ -22,3 +22,18 @@ void send_connection_state(int fd, loginTypes type) {
     header.type = type;
     HANDLE(write(fd, &header, sizeof(header)));
 }
+
+std::vector<std::string> split(const std::string &content, char del) {
+    std::vector<std::string> tokens;
+    uint start = 0;
+    uint end = content.find(del);
+
+    while (end < content.size() + 1) {
+        tokens.push_back(content.substr(start, end - start));
+        start = end + 1;
+        end = content.find(del, start);
+    }
+
+    tokens.push_back(content.substr(start, end));
+    return tokens;
+}

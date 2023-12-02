@@ -13,8 +13,118 @@ int main() {
 
     bool ok = login(sock);
 
+    char temp[MAX_LOCATION_SIZE];
+    msg_header hd;
+    HANDLE(read(sock, &hd, sizeof(hd)));
+    strcpy(temp, hd.data.path);
+
+    std::string remoteLocation(temp);
+
+    NULLCHECK(getcwd(cwd, sizeof(cwd)));
+
+    FileManager fm(string(cwd), sock);
+
+    std::string command;
     while (ok) {
-        printf("YUPPY\n");
+        std::cout<< "remote: " << remoteLocation << '\n' << "local: " << fm.getCurrentPath() << '\n' << "> ";
+        std::cin >> command;
+        switch (mapClientCommands(command)) {
+            case clientCommands::CDR: {
+                std::string path;
+                std::cin >> path;
+                msg_header hd;
+                hd.type = types::CD;
+                strcpy(hd.data.path, path.c_str());
+                HANDLE(write(sock, &hd, sizeof(hd)));
+                HANDLE(read(sock, &hd, sizeof(hd)));
+
+                CHECK_ERROR(hd.type);
+                remoteLocation = string(hd.data.path);
+
+                break;
+            }
+            case clientCommands::CDL: {
+                std::string path;
+                std::cin >> path;
+                
+                int ok = fm.cd(path);
+                if (!ok) {
+                    printf("Cannot open directory!\n");
+                }
+                break;
+            }
+            case clientCommands::LSR: {
+                std::string args{};
+                std::getline(std::cin, args);
+
+                if (args.size() == 0){
+                    args = ".";
+                }
+                msg_header hd;
+                hd.type = types::LS;
+                strcpy(hd.data.path, args.c_str());
+
+                HANDLE(write(sock, &hd, sizeof(hd)));
+
+                HANDLE(read(sock, &hd, sizeof(hd)));
+                char *result = new char[hd.content_size]{};
+                HANDLE(read(sock, result, hd.content_size));
+
+                std::cout << result << '\n';
+                delete[] result;
+                break;
+            }
+            case clientCommands::LSL: {
+                std::string args{};
+                std::getline(std::cin, args);
+
+                if (args.size() == 0){
+                    args = ".";
+                }
+                std::cout << fm.ls(args) << '\n';
+                break;
+            }
+            case clientCommands::STATR: {
+                std::string path;
+                std::cin >> path;
+                msg_header hd;
+                hd.type = types::STAT;
+                strcpy(hd.data.path, path.c_str());
+                HANDLE(write(sock, &hd, sizeof(hd)));
+
+                HANDLE(read(sock, &hd, sizeof(hd)));
+                char *result = new char[hd.content_size]{};
+                HANDLE(read(sock, result, hd.content_size));
+
+                std::cout << result << '\n';
+                delete[] result;
+
+                break;
+            }
+            case clientCommands::STATL: {
+                std::string path;
+                std::cin >> path;
+                std::cout << fm.statFile(path) << '\n';
+
+                break;
+            }
+            case clientCommands::UPLOADR: {
+                std::string args{};
+                std::getline(std::cin, args);
+                auto tokens = split(args, ' ');
+                std::string localPath;
+                std::string remotePath = ".";
+                if (tokens.size() == 2) 
+                    localPath = tokens[1];
+                else if (tokens.size() == 3) {
+                    localPath = tokens[1];
+                    remotePath = tokens[2];
+                }
+                fm.upload(localPath, remotePath);
+                break;
+            }
+        }
+        printf("\n");
     }
 
     return 0;
@@ -23,7 +133,6 @@ int main() {
 bool login(int sock) {
     login_header header;
     
-
     printf("Enter username: ");
     scanf("%s", username);
 
@@ -54,5 +163,6 @@ bool login(int sock) {
             break;
     }
 
+    printf("\n");
     return ok;
 }

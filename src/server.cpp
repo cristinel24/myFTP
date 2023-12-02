@@ -1,5 +1,4 @@
 #include "include/server.h"
-#include "include/common/Logger.h"
 
 int main() {
     pthread_t tid;
@@ -139,7 +138,11 @@ void *handle_client(void *context) {
     char cwd[MAX_LOCATION_SIZE];
     NULLCHECK(getcwd(cwd, sizeof(cwd)));
 
-    // printf("pwd: %s\n", cwd);
+    msg_header hd;
+    strcpy(hd.data.path, cwd);
+    HANDLE(write(*client_socket, &hd, sizeof(hd)));
+
+    FileManager fm(string(cwd), *client_socket);
 
     bool ok = true;
     while (ok) {
@@ -152,6 +155,43 @@ void *handle_client(void *context) {
                 users_db->disconnectUser(header.username);
                 ok = false;
                 break;
+            
+            case types::CD: {
+                int ok = fm.cd(string(header.data.path));
+                logger->Log(tid, logLevel::INFO, "NEW LOCATION: %s\n", fm.getCurrentPath().c_str());
+                msg_header hd;
+                strcpy(hd.data.path, fm.getCurrentPath().c_str());
+                ok? hd.type = types::SUCCESS :hd.type = types::ERROR;
+
+                HANDLE(write(*client_socket, &hd, sizeof(hd)));
+                break;
+            }
+            case types::LS: {
+                std::string result{};
+                result = fm.ls(string(header.data.path));
+                send_payload(*client_socket, types::SUCCESS, result.c_str(), nullptr, nullptr);
+                break;
+            }
+            case types::STAT: {
+                std::string result{};
+                result = fm.statFile(string(header.data.path));
+                send_payload(*client_socket, types::SUCCESS, result.c_str(), nullptr, nullptr);
+                break;
+            }
+            case types::MK_DIR: {
+                bool result;
+                result = fm.makeDirectory(string(header.data.path));
+                types tp = result ? types::SUCCESS : types::ERROR;
+                send_payload(*client_socket, tp, nullptr, nullptr, nullptr);
+                break;
+            }
+            case types::UPLOAD: {
+                bool result;
+                result = fm.acceptUpload(header);
+                types tp = result ? types::SUCCESS : types::ERROR;
+                send_payload(*client_socket, tp, nullptr, nullptr, nullptr);
+                break;
+            }
 
             default:
                 break;

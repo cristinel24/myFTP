@@ -30,23 +30,31 @@
 
 #define HASH_CONSTANT 666
 
-#define DEFAULT_MAX 1024
+#define DEFAULT_MAX 4096
 #define MAX_PASSWORD_SIZE DEFAULT_MAX
 #define MAX_USERNAME_SIZE DEFAULT_MAX
 #define MAX_FILENAME_SIZE DEFAULT_MAX
 #define MAX_LOCATION_SIZE DEFAULT_MAX
+#define CHUNK MAX_SIZE
 
 #define HANDLE(f) if ((f) < 0) {printf("FILE: %s\n", __FILE__); perror(#f); exit(1);}
 #define NULLCHECK(f) if ((f) == NULL) {printf("FILE: %s\n", __FILE__); perror(#f); exit(1);}
 
+#define HANDLE_NO_EXIT(f) if ((f) < 0) {printf("FILE: %s\n", __FILE__); perror(#f);}
+#define NULLCHECK_NO_EXIT(f) if ((f) == NULL) {printf("FILE: %s\n", __FILE__); perror(#f);}
+
 enum types { 
     ERROR, 
-    UPLOAD, 
-    DOWNLOAD, 
+    UPLOAD,
+    DOWNLOAD,
+ 
     CD, 
     LS, 
     STAT,
-    USER_DISCONNECT
+    MK_DIR,
+
+    USER_DISCONNECT,
+    SUCCESS
 };
 
 enum loginTypes {
@@ -74,5 +82,8 @@ struct login_header {
     char password[MAX_PASSWORD_SIZE];
 };
 
+std::vector<std::string> split(const std::string &content, char del);
+
 void send_payload(int fd, types type, const char* msg, const char* username, FileData* data);
 void send_connection_state(int fd, loginTypes type);
+

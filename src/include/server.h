@@ -2,6 +2,8 @@
 
 #include "common/utils.h"
 #include "common/Database.h"
+#include "common/Logger.h"
+#include "common/FileManager.h"
 #include <fstream>
 
 int server_socket;

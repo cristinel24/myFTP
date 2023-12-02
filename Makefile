@@ -4,7 +4,10 @@ CFLAGS := -pthread -lsqlite3
 SERVER_SRC := src/server.cpp \
 			  src/modules/Database.cpp
 
-COMMON_SRC := src/include/common/utils.cpp src/modules/Logger.cpp
+COMMON_SRC := src/include/common/utils.cpp \
+			  src/modules/Logger.cpp \
+			  src/modules/FileManager.cpp
+			  
 CLIENT_SRC := src/client.cpp
 
 all: client server
