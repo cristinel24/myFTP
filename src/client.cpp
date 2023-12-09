@@ -33,7 +33,9 @@ int main() {
 
         HANDLE(write(sock, &hd, sizeof(hd)));
         HANDLE(read(sock, &hd, sizeof(hd)));
-        CHECK_ERROR(hd.type);
+        if (hd.type == types::ERROR) {
+            printf("SERVER ERROR!\n");
+        }
 
         std::cout<< "remote: " << remoteLocation << '\n' << "local: " << fm.getCurrentPath() << '\n' << "> ";
         std::cin >> command;
@@ -48,7 +50,9 @@ int main() {
                 HANDLE(write(sock, &hd, sizeof(hd)));
                 HANDLE(read(sock, &hd, sizeof(hd)));
 
-                CHECK_ERROR(hd.type);
+                if (hd.type == types::ERROR) {
+                    printf("Cannot open directory!\n");
+                }
                 remoteLocation = string(hd.data.path);
 
                 break;
@@ -130,7 +134,53 @@ int main() {
                     localPath = tokens[1];
                     remotePath = tokens[2];
                 }
-                fm.upload(localPath, remotePath);
+                fm.transfer(localPath, remotePath, types::UPLOAD);
+                break;
+            }
+            case clientCommands::DOWNLOADR: {
+                std::string args{};
+                std::getline(std::cin, args);
+                auto tokens = split(args, ' ');
+                std::string localPath;
+                std::string remotePath = ".";
+                if (tokens.size() == 2) 
+                    remotePath = tokens[1];
+                else if (tokens.size() == 3) {
+                    remotePath = tokens[1];
+                    localPath = tokens[2];
+                }
+
+                msg_header hd;
+                hd.type = types::DOWNLOAD;
+                strcpy(hd.data.path, remotePath.c_str());
+                hd.content_size = localPath.size();
+
+                HANDLE(write(sock, &hd, sizeof(hd)));
+                HANDLE(write(sock, localPath.c_str(), hd.content_size));
+                msg_header header;
+                header.type = types::SUCCESS;
+
+                while(header.type != types::ERROR) {
+                    HANDLE(read(sock, &header, sizeof(header)));
+                    switch(header.type) {
+                        case types::MK_DIR: {
+                           bool result;
+                            result = fm.makeDirectory(string(header.data.path));
+                            types tp = result ? types::SUCCESS : types::ERROR;
+                            send_payload(sock, tp, nullptr, nullptr, nullptr);
+                            break;
+                        }
+                        case types::DOWNLOAD: {
+                            bool result = false;
+                            result = fm.acceptTransfer(header);
+                            if (!result) {
+                                printf("There was an error downloading this file!\n");
+                            }
+                            break;
+                        }
+                    }
+                }
+                
                 break;
             }
             case clientCommands::QUIT: {
@@ -138,6 +188,13 @@ int main() {
                 close(sock);
                 exit(0);
             }
+            case clientCommands::HELP: {
+                std::cout << help << '\n';
+                break;
+            }
+            default:
+                std::cout << help << '\n';
+                break;
         }
         printf("\n");
     }

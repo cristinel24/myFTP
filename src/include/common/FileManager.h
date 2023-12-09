@@ -42,8 +42,7 @@ public:
     string statFile(const string& path);
     bool makeDirectory(const string& path);
 
-    bool upload(const string& local, const string& remote);
-    bool acceptUpload(const msg_header header);
+    bool transfer(const string& local, const string& remote, const types type);
+    bool acceptTransfer(const msg_header header);
 
-    bool download(const string& remote, const string& local);
 };

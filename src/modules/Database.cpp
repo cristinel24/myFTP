@@ -41,7 +41,7 @@ int Database::addUser(const string &username) {
     return 1; 
 }
 
-int Database::deleteUser(const string &username) {
+int Database::removeUser(const string &username) {
     string query = "DELETE FROM users "
                    "WHERE username = '" + username + "';";
 
@@ -79,8 +79,8 @@ int Database::select(const string &username, string &value) {
 int Database::updatePass(const string& username, const string& value) {
     sqlite3_stmt *stmt;
     string query = "UPDATE users "
-                        "SET password = '" + value + "' "                
-                        "WHERE username = ?";
+                   "SET password = '" + value + "' "                
+                   "WHERE username = ?";
 
     if (sqlite3_prepare_v2(db, query.c_str(), -1, &stmt, nullptr) != SQLITE_OK) 
         return -1;

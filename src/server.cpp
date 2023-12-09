@@ -2,7 +2,11 @@
 
 int main() {
     pthread_t tid;
-    Logger logger("LOGS");
+
+    char temp[MAX_LOCATION_SIZE];
+    NULLCHECK(getcwd(temp, MAX_LOCATION_SIZE));
+    std::string cwd(std::string(temp).append("LOGS"));
+    Logger logger(cwd);
 
     signal(SIGINT, sigint_handler);
 
@@ -57,7 +61,7 @@ int main() {
                 break;
             }
             case serverCommands::LOGS: {
-                std::ifstream fileName(logger.getFileName());
+                std::ifstream fileName(logger.getFileLocation());
                 std::string line;
                 while (std::getline(fileName, line)) {
                     printf("%s\n", line.c_str());
@@ -72,14 +76,22 @@ int main() {
                 }
                 break;
             }
-            case serverCommands::DELETE_USER: {
+            case serverCommands::REMOVE_USER: {
                 std::string user;
                 std::cin >> user;
-                if (users_db.deleteUser(user) < 0) {
+                if (users_db.removeUser(user) < 0) {
                     printf("Unable to delete user %s. Maybe the user doesn't exists?\n", user.c_str());
                 }
                 break;
             }
+            case serverCommands::HELP: {
+                std::cout << help << '\n';
+                break;
+            }
+
+            default:
+                std::cout << help << '\n';
+                break;
         }
         
     }
@@ -191,15 +203,18 @@ void *handle_client(void *context) {
             }
             case types::USER_DISCONNECT:
                 users_db->disconnectUser(header.username);
+                logger->Log(tid, logLevel::INFO, "USER DISCONNECT");
+
                 ok = false;
                 break;
             
             case types::CD: {
                 int ok = fm.cd(string(header.data.path));
-                logger->Log(tid, logLevel::INFO, "NEW LOCATION: %s\n", fm.getCurrentPath().c_str());
                 msg_header hd;
                 strcpy(hd.data.path, fm.getCurrentPath().c_str());
-                ok? hd.type = types::SUCCESS :hd.type = types::ERROR;
+                ok? hd.type = types::SUCCESS : hd.type = types::ERROR;
+
+                if (ok) logger->Log(tid, logLevel::INFO, "NEW LOCATION: %s\n", fm.getCurrentPath().c_str());
 
                 HANDLE(write(*client_socket, &hd, sizeof(hd)));
                 break;
@@ -207,27 +222,47 @@ void *handle_client(void *context) {
             case types::LS: {
                 std::string result{};
                 result = fm.ls(string(header.data.path));
+                logger->Log(tid, logLevel::INFO, "LS FOR %s", header.data.path);
+
                 send_payload(*client_socket, types::SUCCESS, result.c_str(), nullptr, nullptr);
                 break;
             }
             case types::STAT: {
                 std::string result{};
                 result = fm.statFile(string(header.data.path));
+                logger->Log(tid, logLevel::INFO, "STAT FOR %s", header.data.path);
                 send_payload(*client_socket, types::SUCCESS, result.c_str(), nullptr, nullptr);
                 break;
             }
             case types::MK_DIR: {
                 bool result;
                 result = fm.makeDirectory(string(header.data.path));
+                logger->Log(tid, logLevel::INFO, "NEW DIRECTORY: %s", header.data.path);
                 types tp = result ? types::SUCCESS : types::ERROR;
                 send_payload(*client_socket, tp, nullptr, nullptr, nullptr);
                 break;
             }
             case types::UPLOAD: {
                 bool result;
-                result = fm.acceptUpload(header);
+                result = fm.acceptTransfer(header);
                 types tp = result ? types::SUCCESS : types::ERROR;
                 send_payload(*client_socket, tp, nullptr, nullptr, nullptr);
+
+                logger->Log(tid, logLevel::INFO, "FILE UPLOADED TO %s", header.data.path);
+                break;
+            }
+            case types::DOWNLOAD: {
+                std::string localPath = string(header.data.path);
+                char remotePath[MAX_LOCATION_SIZE];
+                HANDLE(read(*client_socket, remotePath, header.content_size));
+
+                fm.transfer(localPath, string(remotePath), types::DOWNLOAD);
+                logger->Log(tid, logLevel::INFO, "FILE DOWNLOADED TO %s", localPath.c_str());
+
+
+                msg_header hd;
+                hd.type = types::STOP;
+                HANDLE(write(*client_socket, &hd, sizeof(hd)));
                 break;
             }
 

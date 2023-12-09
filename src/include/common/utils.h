@@ -54,8 +54,11 @@ enum types {
     MK_DIR,
 
     USER_DISCONNECT,
+    STOP,
     CHECK_ACCESS,
-    SUCCESS
+    SUCCESS,
+
+    NONE
 };
 
 enum loginTypes {
@@ -71,7 +74,7 @@ struct FileData {
 };
 
 struct msg_header {
-    enum types type;
+    enum types type = types::NONE;
     size_t content_size = 0;
     char username[MAX_USERNAME_SIZE];
     FileData data;

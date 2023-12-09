@@ -15,12 +15,12 @@ enum logLevel {
 };
 
 class Logger {
-    string fileName;
+    string fileLocation;
     mutex sem; 
 
     public:
-    Logger(const string& fileName) : fileName(fileName) {}
+    Logger(const string& fileLocation) : fileLocation(fileLocation) {}
 
-    string getFileName();
+    string getFileLocation();
     void Log(pthread_t tid, logLevel level, const char* format, ...);
 };

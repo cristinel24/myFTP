@@ -15,12 +15,13 @@ std::vector<int> clients;
 enum serverCommands {
     GET_LOGGED_USERS,
     ADD_USER,
-    DELETE_USER,
+    REMOVE_USER,
     GET_USERS,
     BAN, 
     UNBAN,
     GET_BANNED_USERS,
     LOGS, 
+    HELP,
     None 
 };
 
@@ -32,7 +33,8 @@ serverCommands mapServerCommands(const std::string& str) {
     if (str == "unban")         return UNBAN;
     if (str == "logs")          return LOGS;
     if (str == "add")           return ADD_USER;
-    if (str == "delete")        return DELETE_USER;
+    if (str == "remove")        return REMOVE_USER;
+    if (str == "help")          return HELP;
     
     return None;
 }
@@ -45,3 +47,14 @@ void sigint_handler(int sig) {
     HANDLE(close(server_socket));
     exit(0);
 }
+
+const std::string help = "AVAILABLE COMMANDS: \n" \
+                         "users     -> Get a list of all the users in the database \n" \
+                         "logged    -> Get a list of all connected users \n" \
+                         "add       -> Add a user to the database (usage: add [username]) \n" \
+                         "remove    -> Remove a user from the database (usage: remove [username]) \n" \
+                         "ban       -> Ban a user (usage: ban [username]) \n" \
+                         "unban     -> Unban a user (usage: unban [username]) \n" \
+                         "banned    -> Get a list of all banned users \n" \
+                         "logs      -> Print the LOGS content to the terminal \n" \
+                         "help      -> Print this message \n";

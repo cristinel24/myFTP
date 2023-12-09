@@ -18,7 +18,7 @@ class Database {
     ~Database();
     
     int addUser(const string &username);
-    int deleteUser(const string &username);
+    int removeUser(const string &username);
 
     int select(const string &username, string &value);
     int updatePass(const string& username, const string& value);

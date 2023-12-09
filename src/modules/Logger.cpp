@@ -1,13 +1,13 @@
 #include "../include/common/Logger.h"
  
-string Logger::getFileName(){
-    return fileName;
+string Logger::getFileLocation(){
+    return fileLocation;
 } 
 
 void Logger::Log(pthread_t tid, logLevel level, const char* format, ...) {
     lock_guard<mutex> guard(sem);
     
-    ofstream logFile(fileName, ios::app);
+    ofstream logFile(fileLocation, ios::app);
 
     char buffer[MAX_LOG_LINE];
     va_list args;

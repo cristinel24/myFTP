@@ -9,12 +9,6 @@ sockaddr_in server_addr;
 char username[MAX_USERNAME_SIZE];
 char cwd[MAX_LOCATION_SIZE];
 
-#define CHECK_ERROR(var) \
-    if ((var) == types::ERROR) { \
-        std::cout << "ERROR: "; \
-        break; \
-    }
-
 enum clientCommands {
     CDL, 
     CDR,
@@ -25,6 +19,7 @@ enum clientCommands {
     UPLOADR,
     DOWNLOADR,
     QUIT,
+    HELP,
     None 
 };
 
@@ -38,6 +33,7 @@ clientCommands mapClientCommands(const std::string& str) {
     if (str == "up")        return clientCommands::UPLOADR;
     if (str == "down")      return clientCommands::DOWNLOADR;
     if (str == "quit")      return clientCommands::QUIT;
+    if (str == "help")      return clientCommands::HELP;
     return clientCommands::None;
 }
 
@@ -56,3 +52,14 @@ void sigint_handler(int sig) {
 }
 
 bool login(int socket);
+
+const std::string help = "AVAILABLE COMMANDS: \n" \
+                         "cd        -> Change local path (usage: cd [path]) \n" \
+                         "cdr       -> Change remote path (usage: cdr [path]) \n" \
+                         "ls        -> List current local directory (usage: ls [optional: path]) \n" \
+                         "lsr       -> List current remote directory (usage: lsr [optional: path]) \n" \
+                         "stat      -> Get local file metadata (usage: stat [path]) \n" \
+                         "statr     -> Get remote file metadata (usage: stat [path]) \n" \
+                         "up        -> Upload a file to the remote server (usage: up [localPath] [remotePath]) \n" \
+                         "down      -> Download a file from the remote server (usage: down [remotePath] [localPath]) \n" \
+                         "help      -> Print this message \n";

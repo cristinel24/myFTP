@@ -55,7 +55,6 @@ bool FileManager::cd(const string& path) {
     } else {
         return false;
     }
-
 }
 
 string FileManager::statFile(const string& path) {
@@ -85,7 +84,7 @@ bool FileManager::makeDirectory(const string& path) {
     return true;
 }
 
-bool FileManager::upload(const string& localPath, const string& remotePath) {
+bool FileManager::transfer(const string& localPath, const string& remotePath, const types type) {
 
     struct stat info;
     if (stat(localPath.c_str(), &info) < 0) {
@@ -99,7 +98,7 @@ bool FileManager::upload(const string& localPath, const string& remotePath) {
         }
 
         msg_header hd;
-        hd.type         = types::MK_DIR;
+        hd.type = types::MK_DIR;
         strcpy(hd.data.path, remotePath.c_str());
 
         HANDLE_NO_EXIT(write(remote, &hd, sizeof(hd)));
@@ -116,25 +115,23 @@ bool FileManager::upload(const string& localPath, const string& remotePath) {
             string fullPath = localPath + "/" + name;
             string remoteFullPath = remotePath + "/" + name;
 
-            if (!upload(fullPath, remoteFullPath)) {
+            if (!transfer(fullPath, remoteFullPath, type)) {
                 closedir(dir);
                 return false;
             }
         }
         closedir(dir);
     } else {
+
+        printf("FILE: %s\n", localPath.c_str());
+
         FILE *source;
-        NULLCHECK(source = fopen(localPath.c_str(), "rb"));
+        NULLCHECK_NO_EXIT(source = fopen(localPath.c_str(), "rb"));
         vector<char> chunk(CHUNK);
         uint nBytes;
 
-        struct stat info;
-        if (stat(localPath.c_str(), &info) < 0) {
-            return false;
-        }
-
         msg_header hd;
-        hd.type         = types::UPLOAD;
+        hd.type         = type;
         hd.content_size = (size_t)info.st_size;
         strcpy(hd.data.path, remotePath.c_str());
 
@@ -149,7 +146,7 @@ bool FileManager::upload(const string& localPath, const string& remotePath) {
 
 }
 
-bool FileManager::acceptUpload(const msg_header header) {
+bool FileManager::acceptTransfer(const msg_header header) {
     int dest;
 
     //644 read and write for the owner, and read-only for others
@@ -171,9 +168,4 @@ bool FileManager::acceptUpload(const msg_header header) {
     }
     close(dest);
     return 1;
-}
-
-
-bool FileManager::download(const string& remote, const string& local) {
-    return 0;
 }
