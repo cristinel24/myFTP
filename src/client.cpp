@@ -17,7 +17,7 @@ int main() {
     char temp[MAX_LOCATION_SIZE];
     msg_header hd;
     HANDLE(read(sock, &hd, sizeof(hd)));
-    strcpy(temp, hd.data.path);
+    strcpy(temp, hd.path);
 
     std::string remoteLocation(temp);
 
@@ -34,7 +34,8 @@ int main() {
         HANDLE(write(sock, &hd, sizeof(hd)));
         HANDLE(read(sock, &hd, sizeof(hd)));
         if (hd.type == types::ERROR) {
-            printf("SERVER ERROR!\n");
+            printf("You dont have access to this server!\n");
+            exit(0);
         }
 
         std::cout<< "remote: " << remoteLocation << '\n' << "local: " << fm.getCurrentPath() << '\n' << "> ";
@@ -45,7 +46,7 @@ int main() {
                 std::cin >> path;
                 msg_header hd;
                 hd.type = types::CD;
-                strcpy(hd.data.path, path.c_str());
+                strcpy(hd.path, path.c_str());
 
                 HANDLE(write(sock, &hd, sizeof(hd)));
                 HANDLE(read(sock, &hd, sizeof(hd)));
@@ -53,7 +54,7 @@ int main() {
                 if (hd.type == types::ERROR) {
                     printf("Cannot open directory!\n");
                 }
-                remoteLocation = string(hd.data.path);
+                remoteLocation = string(hd.path);
 
                 break;
             }
@@ -76,16 +77,18 @@ int main() {
                 }
                 msg_header hd;
                 hd.type = types::LS;
-                strcpy(hd.data.path, args.c_str());
+                strcpy(hd.path, args.c_str());
 
                 HANDLE(write(sock, &hd, sizeof(hd)));
 
                 HANDLE(read(sock, &hd, sizeof(hd)));
-                char *result = new char[hd.content_size]{};
+
+                char *result = (char *)calloc(hd.content_size, 1);
                 HANDLE(read(sock, result, hd.content_size));
 
                 std::cout << result << '\n';
-                delete[] result;
+
+                delete result;
                 break;
             }
             case clientCommands::LSL: {
@@ -103,15 +106,15 @@ int main() {
                 std::cin >> path;
                 msg_header hd;
                 hd.type = types::STAT;
-                strcpy(hd.data.path, path.c_str());
+                strcpy(hd.path, path.c_str());
                 HANDLE(write(sock, &hd, sizeof(hd)));
 
                 HANDLE(read(sock, &hd, sizeof(hd)));
-                char *result = new char[hd.content_size]{};
+                char *result = (char *)calloc(hd.content_size, 1);
                 HANDLE(read(sock, result, hd.content_size));
 
                 std::cout << result << '\n';
-                delete[] result;
+                delete result;
 
                 break;
             }
@@ -127,9 +130,11 @@ int main() {
                 std::getline(std::cin, args);
                 auto tokens = split(args, ' ');
                 std::string localPath;
-                std::string remotePath = ".";
-                if (tokens.size() == 2) 
+                std::string remotePath;
+                if (tokens.size() == 2) {
                     localPath = tokens[1];
+                    remotePath = fm.getFileName(tokens[1]);
+                }
                 else if (tokens.size() == 3) {
                     localPath = tokens[1];
                     remotePath = tokens[2];
@@ -142,9 +147,11 @@ int main() {
                 std::getline(std::cin, args);
                 auto tokens = split(args, ' ');
                 std::string localPath;
-                std::string remotePath = ".";
-                if (tokens.size() == 2) 
+                std::string remotePath;
+                if (tokens.size() == 2) {
                     remotePath = tokens[1];
+                    localPath = fm.getFileName(tokens[1]);
+                }
                 else if (tokens.size() == 3) {
                     remotePath = tokens[1];
                     localPath = tokens[2];
@@ -152,7 +159,7 @@ int main() {
 
                 msg_header hd;
                 hd.type = types::DOWNLOAD;
-                strcpy(hd.data.path, remotePath.c_str());
+                strcpy(hd.path, remotePath.c_str());
                 hd.content_size = localPath.size();
 
                 HANDLE(write(sock, &hd, sizeof(hd)));
@@ -160,12 +167,12 @@ int main() {
                 msg_header header;
                 header.type = types::SUCCESS;
 
-                while(header.type != types::ERROR) {
+                while(header.type != types::STOP) {
                     HANDLE(read(sock, &header, sizeof(header)));
                     switch(header.type) {
                         case types::MK_DIR: {
                            bool result;
-                            result = fm.makeDirectory(string(header.data.path));
+                            result = fm.makeDirectory(string(header.path));
                             types tp = result ? types::SUCCESS : types::ERROR;
                             send_payload(sock, tp, nullptr, nullptr, nullptr);
                             break;

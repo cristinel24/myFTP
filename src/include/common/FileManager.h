@@ -35,6 +35,7 @@ public:
     FileManager(const string& path, int remote) : currentPath(path), remote(remote) {};
     
     string getCurrentPath();
+    string getFileName(const string& _path);
 
     string ls(const string& path);
     bool cd(const string& path);

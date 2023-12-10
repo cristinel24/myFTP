@@ -18,9 +18,13 @@ string FileManager::getCurrentPath() {
     return currentPath;
 }
 
+string FileManager::getFileName(const string& _path) {
+    return filesystem::path(_path).filename();
+}
+
 string FileManager::ls(const string& path) {
     struct dirent *item;
-    string result;
+    string result= "";
     string cleanPath = path;
 
     cleanPath.erase(remove_if(cleanPath.begin(), cleanPath.end(), [](char c) {
@@ -99,12 +103,14 @@ bool FileManager::transfer(const string& localPath, const string& remotePath, co
 
         msg_header hd;
         hd.type = types::MK_DIR;
-        strcpy(hd.data.path, remotePath.c_str());
+        strcpy(hd.path, remotePath.c_str());
 
         HANDLE_NO_EXIT(write(remote, &hd, sizeof(hd)));
         HANDLE_NO_EXIT(read(remote, &hd, sizeof(hd)));
         if (hd.type == types::ERROR) {
-            return 0;
+            logger->Log(pthread_self(), logLevel::ERR, "Error from mk_dir function");
+            printf("Error from mk_dir function?\n");
+            return false;
         }
 
         struct dirent *item;
@@ -123,34 +129,35 @@ bool FileManager::transfer(const string& localPath, const string& remotePath, co
         closedir(dir);
     } else {
 
-        printf("FILE: %s\n", localPath.c_str());
-
         FILE *source;
         NULLCHECK_NO_EXIT(source = fopen(localPath.c_str(), "rb"));
-        vector<char> chunk(CHUNK);
+        char *chunk = (char *)calloc(CHUNK, 1);
         uint nBytes;
 
         msg_header hd;
         hd.type         = type;
         hd.content_size = (size_t)info.st_size;
-        strcpy(hd.data.path, remotePath.c_str());
+        strcpy(hd.path, remotePath.c_str());
 
         HANDLE_NO_EXIT(write(remote, &hd, sizeof(hd)));
 
-        while((nBytes = fread(chunk.data(), 1, CHUNK, source)) > 0) {
-            HANDLE_NO_EXIT(write(remote, chunk.data(), CHUNK));
+        uint32_t t = 0;
+        while((nBytes = fread(chunk, 1, CHUNK, source)) > 0) {
+            t += nBytes;
+            HANDLE_NO_EXIT(write(remote, chunk, CHUNK));
         }
+        delete chunk;
+        usleep(50000);
+        return true;
     }
-
     return true;
-
 }
 
 bool FileManager::acceptTransfer(const msg_header header) {
     int dest;
 
     //644 read and write for the owner, and read-only for others
-    HANDLE_NO_EXIT(dest = open(header.data.path, O_RDWR | O_CREAT, 0644));
+    HANDLE_NO_EXIT(dest = open(header.path, O_RDWR | O_CREAT, 0644));
 
     uint bytesRead = 0;
     uint totalBytes = 0;

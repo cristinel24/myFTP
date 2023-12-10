@@ -44,6 +44,7 @@
 #define NULLCHECK_NO_EXIT(f) if ((f) == NULL) {printf("FILE: %s\n", __FILE__); perror(#f);}
 
 enum types { 
+    NONE,
     ERROR, 
     UPLOAD,
     DOWNLOAD,
@@ -56,9 +57,7 @@ enum types {
     USER_DISCONNECT,
     STOP,
     CHECK_ACCESS,
-    SUCCESS,
-
-    NONE
+    SUCCESS
 };
 
 enum loginTypes {
@@ -68,26 +67,21 @@ enum loginTypes {
     CONNECTED
 };
 
-struct FileData {
-    char path[MAX_LOCATION_SIZE];
-    char fileName[MAX_FILENAME_SIZE];
-};
-
 struct msg_header {
     enum types type = types::NONE;
     size_t content_size = 0;
-    char username[MAX_USERNAME_SIZE];
-    FileData data;
+    char username[MAX_USERNAME_SIZE]{0};
+    char path[MAX_LOCATION_SIZE]{0};
 };
 
 struct login_header {
     enum loginTypes type;
-    char username[MAX_USERNAME_SIZE];
-    char password[MAX_PASSWORD_SIZE];
+    char username[MAX_USERNAME_SIZE]{0};
+    char password[MAX_PASSWORD_SIZE]{0};
 };
 
 std::vector<std::string> split(const std::string &content, char del);
 
-void send_payload(int fd, types type, const char* msg, const char* username, FileData* data);
+void send_payload(int fd, types type, const char* msg, const char* username, const char* path);
 void send_connection_state(int fd, loginTypes type);
 

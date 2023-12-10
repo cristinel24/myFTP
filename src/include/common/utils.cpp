@@ -1,16 +1,14 @@
 #include "utils.h"
 
-void send_payload(int fd, types type, const char* msg, const char* username, FileData* data) {
+void send_payload(int fd, types type, const char* msg, const char* username, const char* path) {
     msg_header header;
     header.type = type;
     msg != nullptr ? header.content_size = strlen(msg) :  header.content_size = 0;
     if (username != nullptr)
         strcpy(header.username, username);
 
-    if (data != nullptr) {
-        strcpy(header.data.fileName, data->fileName);
-        strcpy(header.data.path, data->path);
-    }
+    if (path != nullptr)
+        strcpy(header.path, path);
 
     HANDLE(write(fd, &header, sizeof(header)));
     if (header.content_size)
