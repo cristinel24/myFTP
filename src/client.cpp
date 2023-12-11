@@ -139,6 +139,7 @@ int main() {
                     localPath = tokens[1];
                     remotePath = tokens[2];
                 }
+                printf("LOCAL: %s, REMOTE: %s\n", localPath.c_str(), remotePath.c_str());
                 fm.transfer(localPath, remotePath, types::UPLOAD);
                 break;
             }

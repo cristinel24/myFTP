@@ -122,7 +122,7 @@ void *client_manager(void *context) {
     HANDLE(bind(server_socket, (sockaddr*)&server_addr, sizeof(server_addr)));
     HANDLE(listen(server_socket, MAX_CLIENTS));
 
-    logger->Log(tid, logLevel::DEBUG, "Server is running at 127.0.0.1:%d\n", server_addr.sin_port);
+    logger->Log(tid, logLevel::DEBUG, "Server is running at 127.0.0.1:%d", server_addr.sin_port);
 
     while (true) {
         client_addr_size     = sizeof(client_addr);
@@ -174,7 +174,7 @@ void *handle_client(void *context) {
     }
 
     clients->push_back(*client_socket);
-    logger->Log(tid, logLevel::DEBUG, "New user connected: %s\n", resp.username);
+    logger->Log(tid, logLevel::DEBUG, "New user connected: %s", resp.username);
 
     char cwd[MAX_LOCATION_SIZE];
     NULLCHECK(getcwd(cwd, sizeof(cwd)));
@@ -214,7 +214,7 @@ void *handle_client(void *context) {
                 strcpy(hd.path, fm.getCurrentPath().c_str());
                 ok? hd.type = types::SUCCESS : hd.type = types::ERROR;
 
-                if (ok) logger->Log(tid, logLevel::INFO, "NEW LOCATION: %s\n", fm.getCurrentPath().c_str());
+                if (ok) logger->Log(tid, logLevel::INFO, "NEW LOCATION: %s", fm.getCurrentPath().c_str());
 
                 HANDLE(write(*client_socket, &hd, sizeof(hd)));
                 break;
@@ -257,16 +257,18 @@ void *handle_client(void *context) {
             }
             case types::DOWNLOAD: {
                 std::string localPath = string(header.path);
-                char remotePath[MAX_LOCATION_SIZE];
+                char *remotePath = (char *)calloc(MAX_LOCATION_SIZE, 1);
                 HANDLE(read(*client_socket, remotePath, header.content_size));
 
                 fm.transfer(localPath, string(remotePath), types::DOWNLOAD);
-                logger->Log(tid, logLevel::INFO, "FILE DOWNLOADED TO %s", localPath.c_str());
 
+                delete remotePath;
+                logger->Log(tid, logLevel::INFO, "FILE DOWNLOADED TO %s", localPath.c_str());
 
                 msg_header hd;
                 hd.type = types::STOP;
                 HANDLE(write(*client_socket, &hd, sizeof(hd)));
+
                 break;
             }
 

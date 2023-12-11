@@ -26,6 +26,7 @@ string FileManager::ls(const string& path) {
     struct dirent *item;
     string result= "";
     string cleanPath = path;
+    bool empty = true;
 
     cleanPath.erase(remove_if(cleanPath.begin(), cleanPath.end(), [](char c) {
         return isspace(c);
@@ -35,11 +36,14 @@ string FileManager::ls(const string& path) {
     if (dir != nullptr) {
         while ((item = readdir(dir)) != nullptr) {
             if (strcmp(item->d_name, ".") != 0 && strcmp(item->d_name, "..") != 0) {
+                empty = false;
                 result += item->d_name;
                 result += "\n";
             }
         }
-        result.pop_back();
+        if (!empty)
+            result.pop_back();
+        else result = " ";
         closedir(dir);
     } else {
         result = "Invalid Path: " + cleanPath + "\n";
@@ -57,6 +61,7 @@ bool FileManager::cd(const string& path) {
         currentPath = string(temp);
         return true;
     } else {
+        printf("VALELEU");
         return false;
     }
 }

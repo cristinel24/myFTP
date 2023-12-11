@@ -17,13 +17,13 @@ void Logger::Log(pthread_t tid, logLevel level, const char* format, ...) {
 
     switch (level) {
         case logLevel::DEBUG:
-            logFile << "[DEBUG] " << "[TID: " << tid << "]: " << buffer; 
-            break;
-        case logLevel::INFO:
-            logFile << "[INFO] " << "[TID: " << tid << "]: "  << buffer;
-            break;
-        case logLevel::ERR:
-            logFile << "[ERROR] " << "[TID: " << tid << "]: "  << buffer;
+            logFile << "[DEBUG] " << "[TID: " << tid << "]: " << buffer << '\n'; 
+            break; 
+        case logLevel::INFO: 
+            logFile << "[INFO] " << "[TID: " << tid << "]: "  << buffer << '\n';
+            break; 
+        case logLevel::ERR: 
+            logFile << "[ERROR] " << "[TID: " << tid << "]: " << buffer << '\n';
             break;
     }
     logFile.close();
