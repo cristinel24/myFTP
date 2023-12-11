@@ -9,6 +9,9 @@ sockaddr_in server_addr;
 char username[MAX_USERNAME_SIZE];
 char cwd[MAX_LOCATION_SIZE];
 
+RSA* serverKeyPair;
+RSA* keyPair;
+
 enum clientCommands {
     CDL, 
     CDR,

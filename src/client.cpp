@@ -11,6 +11,9 @@ int main() {
 
     signal(SIGINT, sigint_handler);
 
+    keyPair = generateKeyPair();
+    HANDLE(read(sock, serverKeyPair, sizeof(serverKeyPair)));
+
     bool ok = login(sock);
     if (!ok) exit(0);
 
@@ -223,8 +226,9 @@ bool login(int sock) {
     printf("Enter password: ");
     scanf("%s", password);
 
-    strcpy(header.username, username);
-    strcpy(header.password, hashFunction(password));
+    strcpy(header.username, encrypt(username, serverKeyPair));
+    strcpy(header.password, encrypt(hashFunction(password), serverKeyPair));
+    memset(header.keyPair, keyPair, sizeof(keyPair));
 
     delete password;
 

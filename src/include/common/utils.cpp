@@ -35,3 +35,39 @@ std::vector<std::string> split(const std::string &content, char del) {
     tokens.push_back(content.substr(start, end));
     return tokens;
 }
+
+RSA* generateKeyPair() {
+    RSA* keyPair = RSA_new();
+    BIGNUM* exponent = BN_new();
+
+    // exponent set to RSA_F4 = 65537
+    BN_set_word(exponent, RSA_F4);
+    RSA_generate_key_ex(keyPair, RSA_LENGTH, exponent, nullptr);
+
+    BN_free(exponent);
+    return keyPair;
+}
+std::string encrypt(const char* data, RSA* publicKey) {
+    int size = RSA_size(publicKey);
+    char* enData = new unsigned char[size];
+
+    int result = -1;
+    HANDLE_NO_EXIT(result = RSA_public_encrypt(strlen(data), data, enData, publicKey, RSA_PKCS1_PADDING));
+
+    std::string encrypted(enData, result);
+    delete[] enData;
+
+    return encrypted;
+}
+std::string decrypt(const char* data, RSA* privateKey) {
+    int size = RSA_size(publicKey);
+    char* deData = new unsigned char[size];
+
+    int result = -1;
+    HANDLE_NO_EXIT(result = RSA_private_decrypt(strlen(data), data, deData, privateKey, RSA_PKCS1_PADDING));
+
+    std::string decrypted(deData, result);
+    delete[] deData;
+
+    return decrypted;
+} 

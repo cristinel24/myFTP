@@ -20,6 +20,12 @@
 #include <time.h>
 #include <pthread.h>
 
+//RSA
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+const int RSA_LENGTH = 2048;
+
 //STD
 #include <vector>
 #include <string>
@@ -78,6 +84,7 @@ struct login_header {
     enum loginTypes type;
     char username[MAX_USERNAME_SIZE]{0};
     char password[MAX_PASSWORD_SIZE]{0};
+    RSA  keyPair;
 };
 
 std::vector<std::string> split(const std::string &content, char del);
@@ -85,3 +92,7 @@ std::vector<std::string> split(const std::string &content, char del);
 void send_payload(int fd, types type, const char* msg, const char* username, const char* path);
 void send_connection_state(int fd, loginTypes type);
 
+RSA* generateKeyPair();
+std::string encrypt(const char* data, RSA* publicKey);  
+std::string decrypt(const char* data, RSA* privateKey);  
+void decryptPackage(msg_header header, RSA* privateKey);

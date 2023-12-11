@@ -123,6 +123,8 @@ void *client_manager(void *context) {
 
     logger->Log(tid, logLevel::DEBUG, "Server is running at 127.0.0.1:%d", server_addr.sin_port);
 
+    keyPair = generateKeyPair();
+
     while (true) {
         int *client_socket = new int;
         client_addr_size     = sizeof(client_addr);
@@ -148,8 +150,16 @@ void *handle_client(void *context) {
 
     pthread_t tid = pthread_self();
 
+    HANDLE(write(*client_socket, keyPair, sizeof(keyPair)));
+    RSA clientKeyPair;
+
     login_header resp;
     HANDLE(read(*client_socket, &resp, sizeof(resp)));
+    
+    memset(clientKeyPair, hd.keyPair, sizeof(hd.keyPair));
+
+    
+
     if (!users_db->isUserAllowed(resp.username) || users_db->isUserConnected(resp.username)) {
         send_connection_state(*client_socket, loginTypes::FORBIDDEN);
         return nullptr;

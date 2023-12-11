@@ -9,6 +9,8 @@
 int server_socket;
 Database users_db;
 
+RSA* keyPair;
+
 pthread_mutex_t thread_locker = PTHREAD_MUTEX_INITIALIZER;
 std::vector<int> clients;
 
