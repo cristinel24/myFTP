@@ -61,7 +61,6 @@ bool FileManager::cd(const string& path) {
         currentPath = string(temp);
         return true;
     } else {
-        printf("VALELEU");
         return false;
     }
 }
@@ -133,6 +132,7 @@ bool FileManager::transfer(const string& localPath, const string& remotePath, co
         }
         closedir(dir);
     } else {
+        pthread_mutex_lock(&mutex);
 
         FILE *source;
         NULLCHECK_NO_EXIT(source = fopen(localPath.c_str(), "rb"));
@@ -152,6 +152,9 @@ bool FileManager::transfer(const string& localPath, const string& remotePath, co
             HANDLE_NO_EXIT(write(remote, chunk, CHUNK));
         }
         delete chunk;
+
+        pthread_mutex_unlock(&mutex);
+
         usleep(50000);
         return true;
     }
@@ -161,6 +164,7 @@ bool FileManager::transfer(const string& localPath, const string& remotePath, co
 bool FileManager::acceptTransfer(const msg_header header) {
     int dest;
 
+    pthread_mutex_lock(&mutex);
     //644 read and write for the owner, and read-only for others
     HANDLE_NO_EXIT(dest = open(header.path, O_RDWR | O_CREAT, 0644));
 
@@ -179,5 +183,7 @@ bool FileManager::acceptTransfer(const msg_header header) {
         HANDLE_NO_EXIT(write(dest, chunk, bytesRead));
     }
     close(dest);
+
+    pthread_mutex_unlock(&mutex);
     return 1;
 }

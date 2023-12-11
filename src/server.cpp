@@ -105,7 +105,6 @@ void *client_manager(void *context) {
     auto logger         = reinterpret_cast<Logger*>(((void **)context)[0]);
     auto users_db       = reinterpret_cast<Database*>(((void **)context)[1]);
 
-    int client_socket;
     sockaddr_in server_addr, client_addr;
     socklen_t client_addr_size;
     pthread_t tid;
@@ -125,13 +124,14 @@ void *client_manager(void *context) {
     logger->Log(tid, logLevel::DEBUG, "Server is running at 127.0.0.1:%d", server_addr.sin_port);
 
     while (true) {
+        int *client_socket = new int;
         client_addr_size     = sizeof(client_addr);
-        HANDLE(client_socket = accept(server_socket, (sockaddr*)&client_addr, &client_addr_size));
+        HANDLE(*client_socket = accept(server_socket, (sockaddr*)&client_addr, &client_addr_size));
 
         void * args[4];
         args[0] = logger;
         args[1] = users_db;
-        args[2] = &client_socket;
+        args[2] = client_socket;
         args[3] = &clients;
 
         pthread_create(&tid, NULL, handle_client, args);

@@ -28,6 +28,7 @@ class FileManager {
     int remote;
     Logger* logger;
     pthread_t tid;
+    pthread_mutex_t mutex;
 
     string getPermissionsAsString(uint32_t perms);
 

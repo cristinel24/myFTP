@@ -77,9 +77,11 @@ int main() {
                 }
                 msg_header hd;
                 hd.type = types::LS;
+                hd.content_size = 0;
                 strcpy(hd.path, args.c_str());
 
                 HANDLE(write(sock, &hd, sizeof(hd)));
+
 
                 HANDLE(read(sock, &hd, sizeof(hd)));
 
@@ -139,7 +141,6 @@ int main() {
                     localPath = tokens[1];
                     remotePath = tokens[2];
                 }
-                printf("LOCAL: %s, REMOTE: %s\n", localPath.c_str(), remotePath.c_str());
                 fm.transfer(localPath, remotePath, types::UPLOAD);
                 break;
             }
