@@ -4,7 +4,7 @@ CFLAGS := -pthread -lsqlite3
 SERVER_SRC := src/server.cpp \
 			  src/modules/Database.cpp
 
-COMMON_SRC := src/include/common/utils.cpp \
+COMMON_SRC := src/modules/utils.cpp \
 			  src/modules/Logger.cpp \
 			  src/modules/FileManager.cpp
 			  

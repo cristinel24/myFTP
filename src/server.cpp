@@ -141,10 +141,10 @@ void *client_manager(void *context) {
 
 void *handle_client(void *context) {
 
-    auto logger         = reinterpret_cast<Logger*>(((void **)context)[0]);
-    auto users_db       = reinterpret_cast<Database*>(((void **)context)[1]);
-    auto client_socket  = reinterpret_cast<int*>(((void **)context)[2]);
-    auto clients        = reinterpret_cast<std::vector<int>*>(((void **)context)[3]);
+    auto logger         = reinterpret_cast<Logger*>             (((void **)context)[0]);
+    auto users_db       = reinterpret_cast<Database*>           (((void **)context)[1]);
+    auto client_socket  = reinterpret_cast<int*>                (((void **)context)[2]);
+    auto clients        = reinterpret_cast<std::vector<int>*>   (((void **)context)[3]);
 
     pthread_t tid = pthread_self();
 
