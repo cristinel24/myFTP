@@ -151,7 +151,7 @@ bool FileManager::transfer(const string& localPath, const string& remotePath, co
             t += nBytes;
             HANDLE_NO_EXIT(write(remote, chunk, CHUNK));
         }
-        delete chunk;
+        free(chunk);
 
         pthread_mutex_unlock(&mutex);
 

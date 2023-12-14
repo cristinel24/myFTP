@@ -1,4 +1,4 @@
-CC := g++
+CC := g++ -Wall
 CFLAGS := -pthread -lsqlite3
 
 SERVER_SRC := src/server.cpp \

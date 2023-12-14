@@ -262,7 +262,7 @@ void *handle_client(void *context) {
 
                 fm.transfer(localPath, string(remotePath), types::DOWNLOAD);
 
-                delete remotePath;
+                free(remotePath);
                 logger->Log(tid, logLevel::INFO, "FILE DOWNLOADED TO %s", localPath.c_str());
 
                 msg_header hd;

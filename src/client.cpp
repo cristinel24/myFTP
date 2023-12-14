@@ -90,7 +90,7 @@ int main() {
 
                 std::cout << result << '\n';
 
-                delete result;
+                free(result);
                 break;
             }
             case clientCommands::LSL: {
@@ -116,7 +116,7 @@ int main() {
                 HANDLE(read(sock, result, hd.content_size));
 
                 std::cout << result << '\n';
-                delete result;
+                free(result);
 
                 break;
             }
@@ -187,6 +187,8 @@ int main() {
                             }
                             break;
                         }
+                        default:
+                            break;
                     }
                 }
                 
@@ -226,7 +228,7 @@ bool login(int sock) {
     strcpy(header.username, username);
     strcpy(header.password, hashFunction(password));
 
-    delete password;
+    free(password);
 
     send(sock, &header, sizeof(header), 0);
     HANDLE(read(sock, &header, sizeof(header)));
