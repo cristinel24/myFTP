@@ -14,6 +14,13 @@ string FileManager::getPermissionsAsString(uint32_t perms) {
     return permissions;
 }
 
+bool FileManager::compareFiles(const dirent* file_a, const dirent* file_b) {
+    if (file_a->d_type != file_b->d_type) {
+        return file_a->d_type == DT_DIR;
+    }
+    return strcmp(file_a->d_name, file_b->d_name) < 0;
+}
+
 string FileManager::getCurrentPath() {
     return currentPath;
 }
@@ -25,11 +32,10 @@ string FileManager::getFileName(const string& _path) {
 string FileManager::ls(const string& path) {
     struct dirent *item;
     ostringstream result;
-
     string type;
+    vector<dirent*> items;
 
     string cleanPath = path;
-    bool empty = true;
 
     cleanPath.erase(remove_if(cleanPath.begin(), cleanPath.end(), [](char c) {
         return isspace(c);
@@ -37,10 +43,15 @@ string FileManager::ls(const string& path) {
 
     DIR *dir = opendir(cleanPath.c_str());
     if (dir != nullptr) {
-        while ((item = readdir(dir)) != nullptr) {
-            if (strcmp(item->d_name, ".") != 0 && strcmp(item->d_name, "..") != 0) {
-                empty = false;
 
+        while ((item = readdir(dir)) != nullptr) {
+            items.push_back(item);
+        }
+        sort(items.begin(), items.end(), FileManager::compareFiles);
+
+        for (const auto& item: items) {
+            if (strcmp(item->d_name, ".") != 0 && strcmp(item->d_name, "..") != 0) {
+                
                 switch (item->d_type)
                 {
                     case DT_DIR:        
@@ -53,14 +64,15 @@ string FileManager::ls(const string& path) {
 
                     case DT_FIFO:       type = "- fifo";  break;
                     case DT_SOCK:       type = "- socket";  break;
-                    default:            type = "- unkown";  break;
+                    default:            type = "- unknown";  break;
                 }
                 result << ANSI_RESET << type << "\n";
             }
         }
-        if (empty)
-        result << " ";
+        if (items.empty())
+            result << " ";
         closedir(dir);
+
     } else {
         result << ANSI_COLOR_RED    << "Invalid Path: " + cleanPath + "\n"              << ANSI_RESET;
         result << ANSI_COLOR_RED    << "Error details: " + string(strerror(errno))      << ANSI_RESET;

@@ -33,6 +33,7 @@ class FileManager {
     pthread_mutex_t mutex;
 
     string getPermissionsAsString(uint32_t perms);
+    static bool compareFiles(const dirent* file_a, const dirent* file_b);
 
 public:
     FileManager(const string& path, int remote) : currentPath(path), remote(remote) {};
