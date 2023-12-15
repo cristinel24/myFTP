@@ -38,7 +38,15 @@ int main() {
             exit(0);
         }
 
-        std::cout<< "remote: " << remoteLocation << '\n' << "local: " << fm.getCurrentPath() << '\n' << "> ";
+        std::cout << ANSI_STYLE_ITALIC 
+                  << ANSI_COLOR_LIGHT_GRAY
+                  <<  "remote: " << remoteLocation 
+                  << '\n' 
+                  << "local: " << fm.getCurrentPath() 
+                  << '\n' 
+                  << ANSI_RESET 
+                  << "> ";
+
         std::cin >> command;
         switch (mapClientCommands(command)) {
             case clientCommands::CDR: {
@@ -85,9 +93,8 @@ int main() {
 
                 HANDLE(read(sock, &hd, sizeof(hd)));
 
-                char *result = (char *)calloc(hd.content_size, 1);
+                char *result = (char *)calloc(hd.content_size + 1, 1);
                 HANDLE(read(sock, result, hd.content_size));
-
                 std::cout << result << '\n';
 
                 free(result);
@@ -112,10 +119,10 @@ int main() {
                 HANDLE(write(sock, &hd, sizeof(hd)));
 
                 HANDLE(read(sock, &hd, sizeof(hd)));
-                char *result = (char *)calloc(hd.content_size, 1);
+                char *result = (char *)calloc(hd.content_size + 1, 1);
                 HANDLE(read(sock, result, hd.content_size));
 
-                std::cout << result << '\n';
+                std::cout << '\n' <<  result << '\n';
                 free(result);
 
                 break;

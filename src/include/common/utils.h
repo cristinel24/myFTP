@@ -37,6 +37,14 @@
 #define MAX_LOCATION_SIZE DEFAULT_MAX
 #define CHUNK MAX_SIZE
 
+#define ANSI_COLOR_RED          "\x1b[31m"
+#define ANSI_COLOR_GREEN        "\x1b[32m"
+#define ANSI_COLOR_YELLOW       "\x1b[32m"
+#define ANSI_COLOR_BLUE         "\x1b[34m"
+#define ANSI_COLOR_LIGHT_GRAY   "\033[90m"
+#define ANSI_STYLE_ITALIC       "\x1b[3m"
+#define ANSI_RESET              "\x1b[0m"
+
 #define HANDLE(f) if ((f) < 0) {printf("FILE: %s\n", __FILE__); perror(#f); exit(1);}
 #define NULLCHECK(f) if ((f) == NULL) {printf("FILE: %s\n", __FILE__); perror(#f); exit(1);}
 

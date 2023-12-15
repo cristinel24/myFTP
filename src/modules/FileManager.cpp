@@ -24,7 +24,10 @@ string FileManager::getFileName(const string& _path) {
 
 string FileManager::ls(const string& path) {
     struct dirent *item;
-    string result= "";
+    ostringstream result;
+
+    string type;
+
     string cleanPath = path;
     bool empty = true;
 
@@ -37,20 +40,33 @@ string FileManager::ls(const string& path) {
         while ((item = readdir(dir)) != nullptr) {
             if (strcmp(item->d_name, ".") != 0 && strcmp(item->d_name, "..") != 0) {
                 empty = false;
-                result += item->d_name;
-                result += "\n";
+
+                switch (item->d_type)
+                {
+                    case DT_DIR:        
+                        result << ANSI_COLOR_BLUE << std::left << std::setw(LS_WIDTH) << item->d_name;
+                        type = "- directory";  break;
+
+                    case DT_REG:        
+                        result << ANSI_COLOR_GREEN << std::left << std::setw(LS_WIDTH) << item->d_name;
+                        type = "- file";  break;
+
+                    case DT_FIFO:       type = "- fifo";  break;
+                    case DT_SOCK:       type = "- socket";  break;
+                    default:            type = "- unkown";  break;
+                }
+                result << ANSI_RESET << type << "\n";
             }
         }
-        if (!empty)
-            result.pop_back();
-        else result = " ";
+        if (empty)
+        result << " ";
         closedir(dir);
     } else {
-        result = "Invalid Path: " + cleanPath + "\n";
-        result += "Error details: " + string(strerror(errno));
+        result << ANSI_COLOR_RED    << "Invalid Path: " + cleanPath + "\n"              << ANSI_RESET;
+        result << ANSI_COLOR_RED    << "Error details: " + string(strerror(errno))      << ANSI_RESET;
     }
 
-    return result;
+    return result.str();
  }
 
 bool FileManager::cd(const string& path) {
@@ -68,13 +84,26 @@ bool FileManager::cd(const string& path) {
 string FileManager::statFile(const string& path) {
     struct stat info;
     if (stat(path.c_str(), &info) < 0) {
-        string error;
-        error = "Invalid Path: " + path + "\n";
-        error += "Error details: " + string(strerror(errno));
+        ostringstream error;
+        error << ANSI_COLOR_RED << "Invalid Path: " + path + "\n"                  << ANSI_RESET;
+        error << ANSI_COLOR_RED << "Error details: " + string(strerror(errno))     << ANSI_RESET;
+        return error.str();
+    }
+
+    mode_t mode = info.st_mode;
+    string fileMode("unknown");
+    switch(mode & S_IFMT) {
+        case S_IFREG:   fileMode = "regular file";     break;          
+        case S_IFDIR:   fileMode = "directory";        break;      
+        case S_IFIFO:   fileMode = "fifo";             break; 
+        case S_IFSOCK:  fileMode = "socket";           break;   
+        default:
+            break;
     }
 
     string result{};
     result += "File: " + path + "\n";
+    result += "Type: " + fileMode + "\n";
     result += "Size: " + to_string(info.st_size) + "\n";
     result += "File Permissions: ";
     result += this->getPermissionsAsString(info.st_mode) + "\n";
@@ -113,7 +142,6 @@ bool FileManager::transfer(const string& localPath, const string& remotePath, co
         HANDLE_NO_EXIT(read(remote, &hd, sizeof(hd)));
         if (hd.type == types::ERROR) {
             logger->Log(pthread_self(), logLevel::ERR, "Error from mk_dir function");
-            printf("Error from mk_dir function?\n");
             return false;
         }
 

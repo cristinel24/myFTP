@@ -260,7 +260,7 @@ void *handle_client(void *context) {
                 char *remotePath = (char *)calloc(MAX_LOCATION_SIZE, 1);
                 HANDLE(read(*client_socket, remotePath, header.content_size));
 
-                fm.transfer(localPath, string(remotePath), types::DOWNLOAD);
+                bool result = fm.transfer(localPath, string(remotePath), types::DOWNLOAD);
 
                 free(remotePath);
                 logger->Log(tid, logLevel::INFO, "FILE DOWNLOADED TO %s", localPath.c_str());

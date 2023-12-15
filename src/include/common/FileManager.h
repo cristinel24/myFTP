@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <filesystem>
 
@@ -20,6 +21,7 @@
 
 #define INVALID_PATH "ERROR: INVALID PATH!"
 #define MAX_SIZE 1024
+#define LS_WIDTH 40
 
 using namespace std;
 
