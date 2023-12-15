@@ -41,11 +41,12 @@ int main() {
         std::cout << ANSI_STYLE_ITALIC 
                   << ANSI_COLOR_LIGHT_GRAY
 
-                  << std::setw(8) << std::right
-                  <<  "remote: " << remoteLocation << '\n'
+                  << "remote: "
+                  << remoteLocation << '\n'
 
-                  << std::setw(8) << std::right
-                  << "local: " << fm.getCurrentPath() << '\n' 
+                  << "local:  "
+                  << fm.getCurrentPath() << '\n' 
+                  
                   << ANSI_RESET 
                   << "> ";
 
