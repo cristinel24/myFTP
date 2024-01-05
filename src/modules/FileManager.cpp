@@ -153,7 +153,9 @@ bool FileManager::transfer(const string& localPath, const string& remotePath, co
         HANDLE_NO_EXIT(write(remote, &hd, sizeof(hd)));
         HANDLE_NO_EXIT(read(remote, &hd, sizeof(hd)));
         if (hd.type == types::ERROR) {
-            logger->Log(pthread_self(), logLevel::ERR, "Error from mk_dir function");
+            std::cout << ANSI_COLOR_RED 
+                      << "Error creating directory: " << remotePath << '\n' << "Maybe it already exists?\n"
+                      << ANSI_RESET;
             return false;
         }
 
@@ -203,7 +205,6 @@ bool FileManager::transfer(const string& localPath, const string& remotePath, co
 
 bool FileManager::acceptTransfer(const msg_header header) {
     int dest;
-
     pthread_mutex_lock(&mutex);
     //644 read and write for the owner, and read-only for others
     HANDLE_NO_EXIT(dest = open(header.path, O_RDWR | O_CREAT, 0644));
@@ -224,6 +225,6 @@ bool FileManager::acceptTransfer(const msg_header header) {
     }
     close(dest);
 
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
     return 1;
 }

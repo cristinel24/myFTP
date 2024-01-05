@@ -8,8 +8,6 @@ int main() {
     std::string cwd(std::string(temp).append("/LOGS"));
     Logger logger(cwd);
 
-    signal(SIGINT, sigint_handler);
-
     void * args[2];
     args[0] = &logger;
     args[1] = &users_db;
@@ -122,6 +120,7 @@ void *client_manager(void *context) {
     HANDLE(listen(server_socket, MAX_CLIENTS));
 
     logger->Log(tid, logLevel::DEBUG, "Server is running at 127.0.0.1:%d", server_addr.sin_port);
+    signal(SIGINT, sigint_handler);
 
     while (true) {
         int *client_socket = new int;
@@ -237,8 +236,15 @@ void *handle_client(void *context) {
                 bool result;
                 msg_header hd;
                 result = fm.makeDirectory(string(header.path));
-                logger->Log(tid, logLevel::INFO, "NEW DIRECTORY: %s", header.path);
-                hd.type = result ? types::SUCCESS : types::ERROR;
+
+                if (result) {
+                    logger->Log(tid, logLevel::INFO, "NEW DIRECTORY: %s", header.path);
+                    hd.type = types::SUCCESS;
+                }
+                else {
+                    logger->Log(tid, logLevel::ERR, "ERROR MAKING DIRECTORY: %s", header.path);
+                    hd.type = types::ERROR;
+                }
 
                 HANDLE(write(*client_socket, &hd, sizeof(hd)));
                 break;
