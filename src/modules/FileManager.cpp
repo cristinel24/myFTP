@@ -207,7 +207,7 @@ bool FileManager::acceptTransfer(const msg_header header) {
     int dest;
     pthread_mutex_lock(&mutex);
     //644 read and write for the owner, and read-only for others
-    HANDLE_NO_EXIT(dest = open(header.path, O_RDWR | O_CREAT, 0644));
+    HANDLE_NO_EXIT(dest = open(header.path, O_RDWR | O_CREAT | O_TRUNC, 0644));
 
     uint bytesRead = 0;
     uint totalBytes = 0;
@@ -225,6 +225,6 @@ bool FileManager::acceptTransfer(const msg_header header) {
     }
     close(dest);
 
-    //pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&mutex);
     return 1;
 }
